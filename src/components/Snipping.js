@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button, FormControl} from "react-bootstrap";
-import "./Display.css";
+import "./style/Display.css";
 import { MDBDataTable } from "mdbreact";
 import { w3cwebsocket as W3CWebSocket } from "websocket";
 import CONFIG from "./constant/config";
@@ -71,8 +71,6 @@ const Snipping = () => {
   const start = () => {
     if (
       nodeUrl == "" ||
-      walletAddress == "" ||
-      privateKey == "" ||
       tokenAddress == "" ||
       inAmount == "" ||
       slippage == "" ||
@@ -144,7 +142,7 @@ const Snipping = () => {
     <div>
       <div className="row">
         <div className="col-sm-12 col-md-6 col-lg-6">
-          <div className="form-group">
+          <div className="form-group hidden">
             <label htmlFor="usr">Wallet Address:</label>
             <FormControl
               type="text"
@@ -170,7 +168,7 @@ const Snipping = () => {
           </div>
         </div>
         <div className="col-sm-12 col-md-6 col-lg-6">
-          <div className="form-group">
+          <div className="form-group hidden">
             <label htmlFor="pwd">Private Key:</label>
             <FormControl
               type="password"

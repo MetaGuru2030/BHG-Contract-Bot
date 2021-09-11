@@ -6,7 +6,7 @@ import Snipping from "./Snipping.js";
 import Setting from "./Setting.js";
 import DataMange from "./DataManage.js";
 import TokenList from "./TokenList.js";
-import "./App.css";
+import "./style/App.css";
 
 class App extends Component {
   render() {

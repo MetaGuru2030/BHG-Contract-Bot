@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button, FormControl } from "react-bootstrap";
-import "./Label.css";
+import "./style/Label.css";
 import {
   resetSnippingAPI,
   initSnippingAPI,

@@ -33,3 +33,7 @@
 thead:nth-last-child(1) {
  display: none;
 }
+
+.hidden {
+  display: none;
+}

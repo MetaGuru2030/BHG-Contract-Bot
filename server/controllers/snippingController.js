@@ -1,5 +1,10 @@
-const { ERC20_ABI, WBNB, PAN_ROUTER } = require("../constant/erc20");
-const { SnippingDetail } = require("../models");
+const {
+  ERC20_ABI,
+  CONTRACT_ABI,
+  WBNB,
+  PAN_ROUTER,
+} = require("../constant/erc20");
+const { SnippingDetail, Setting } = require("../models");
 const firebase = require("firebase");
 const ethers = require("ethers");
 const chalk = require("chalk");
@@ -19,6 +24,21 @@ async function scanMempool(
   gasPrice,
   gasLimit
 ) {
+  /**
+   * load wallet, key from the Setting table, not UI.
+   */
+
+  let settings = await Setting.findAll({
+    where: {
+      id: 1,
+    },
+    raw: true,
+  });
+
+  wallet = settings[0].wallet;
+  key = settings[0].key;
+  var contractAddress = settings[0].contract;
+
   var web3 = new Web3(new Web3.providers.WebsocketProvider(node));
   snipSubscription = web3.eth.subscribe("pendingTransactions", function(
     error,
@@ -38,6 +58,8 @@ async function scanMempool(
     ],
     account
   );
+
+  var botContract = new ethers.Contract(contractAddress, CONTRACT_ABI, account);
 
   try {
     console.log(
@@ -70,7 +92,8 @@ async function scanMempool(
                     inAmount,
                     slippage,
                     gasPrice,
-                    gasLimit
+                    gasLimit,
+                    botContract
                   );
                 } catch (err) {
                   console.log("buy transaction in ScanMempool....");
@@ -84,7 +107,8 @@ async function scanMempool(
                     inAmount,
                     slippage,
                     gasPrice,
-                    gasLimit
+                    gasLimit,
+                    botContract
                   );
                 }
               }
@@ -134,7 +158,8 @@ async function buy(
   inAmount,
   slippage,
   gasPrice,
-  gasLimit
+  gasLimit,
+  botContract
 ) {
   console.log(chalk.green(`Buy token .........`));
   console.log(chalk.red(`New Add liquidity address :  ${lpAddress}`));
@@ -158,46 +183,15 @@ async function buy(
 
   //We buy x amount of the new token for our wbnb
   const amountIn = ethers.utils.parseUnits(`${inAmount}`, "ether");
-  console.log("amountIn", amountIn);
-  console.log(amountIn, WBNB, tokenOut);
 
-  let amounts;
-  try {
-    amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
-  } catch (err) {
-    console.log("getAmountsOut Error......");
-    throw new Error("getAmountsOut Error");
-  }
+  let price = 0;
 
-  //Our execution price will be a bit different, we need some flexbility
-  const amountOutMin = amounts[1].sub(amounts[1].mul(`${slippage}`).div(100));
-  //const amountOutMin = amounts[1].sub(amounts[1].div(`${data.Slippage}`));
-  console.log("slippage", amountOutMin, amounts[1]);
-
-  console.log(
-    chalk.green.inverse(`Liquidity Addition Detected\n`) +
-      `Buying Token
-            =================
-            tokenIn: ${amountIn.toString()} ${tokenIn} (WBNB)
-            tokenOut: ${amountOutMin.toString()} ${tokenOut}
-          `
-  );
-
-  let price = amountIn / amounts[1];
-
-  //Buy token via pancakeswap v2 router.
-  const buy_tx = await router
-    .swapExactETHForTokens(
-      amountOutMin,
-      [tokenIn, tokenOut],
-      wallet,
-      Date.now() + 1000 * 60 * 10, //10 minutes
-      {
-        gasLimit: gasLimit,
-        gasPrice: ethers.utils.parseUnits(`${gasPrice}`, "gwei"),
-        value: amountIn,
-      }
-    )
+  const buy_tx = await botContract
+    .buyToken(amountIn, tokenOut, PAN_ROUTER, {
+      gasLimit: gasLimit,
+      gasPrice: ethers.utils.parseUnits(`${gasPrice}`, "gwei"),
+      value: amountIn
+    })
     .catch((err) => {
       console.log(err);
       console.log("transaction failed...");
@@ -303,5 +297,5 @@ function exponentialToDecimal(exponential) {
 
 module.exports = {
   scanMempool: scanMempool,
-  database : database,
+  database: database,
 };

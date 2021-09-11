@@ -52,7 +52,7 @@ const Setting = () => {
         <div className="form-group">
           <label htmlFor="usr">Private Key:</label>
           <FormControl
-            type="text"
+            type="password"
             id="privateKey"
             value={key}
             onChange={(e) => {

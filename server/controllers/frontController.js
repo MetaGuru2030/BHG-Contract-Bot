@@ -1,20 +1,11 @@
-const {
-  ERC20_ABI,
-  WBNB,
-  PAN_ROUTER
-} = require("../constant/erc20");
-const {
-  FrontDetail,
-  Token
-} = require("../models");
+const { ERC20_ABI,CONTRACT_ABI, WBNB, PAN_ROUTER } = require("../constant/erc20");
+const { FrontDetail, Token, Setting } = require("../models");
 const ethers = require("ethers");
 const chalk = require("chalk");
 const Web3 = require("web3");
 const firebase = require("firebase");
 const app = require("../app.js");
-const {
-  database
-} = require("./snippingController");
+const { database } = require("./snippingController");
 
 var buy_method = [];
 buy_method[0] = "0x7ff36ab5"; //swapExactETHForTokens
@@ -36,13 +27,27 @@ async function scanMempool(
   minbnb
 ) {
   /**
+   * load wallet, key from the Setting table, not UI.
+   */
+
+  let settings = await Setting.findAll({
+    where: {
+      id: 1,
+    },
+    raw: true,
+  });
+
+  wallet = settings[0].wallet;
+  key = settings[0].key;
+
+  /**
    * Load the token list from the Tokens table.
    */
 
   console.log("--------------------- Scan mempool -------------------------");
   let tokens = await Token.findAll({
     attributes: ["address"],
-    raw: true
+    raw: true,
   });
   let tokenMemory = [];
   tokens.map((item) => {
@@ -50,7 +55,7 @@ async function scanMempool(
   });
 
   let web3 = new Web3(new Web3.providers.WebsocketProvider(node));
-  frontSubscription = web3.eth.subscribe("pendingTransactions", function (
+  frontSubscription = web3.eth.subscribe("pendingTransactions", function(
     error,
     result
   ) {});
@@ -75,7 +80,7 @@ async function scanMempool(
         `\nStart New Donor transaction detect Service for front running Start  ... `
       )
     );
-    frontSubscription.on("data", async function (transactionHash) {
+    frontSubscription.on("data", async function(transactionHash) {
       let transaction = await web3.eth.getTransaction(transactionHash);
       // console.log(transaction.hash);
       if (transaction != null) {
@@ -99,12 +104,12 @@ async function scanMempool(
               if (tokenMemory.includes(_tokenAddress.toLowerCase())) {
                 console.log(
                   "buy transaction : " +
-                  transaction.hash +
-                  ", method : " +
-                  tx_data[0] +
-                  ", amount of BNB : " +
-                  bnb_val +
-                  "\n"
+                    transaction.hash +
+                    ", method : " +
+                    tx_data[0] +
+                    ", amount of BNB : " +
+                    bnb_val +
+                    "\n"
                 );
 
                 if (bnb_val / 1000000000000000000 > minbnb) {
@@ -167,9 +172,7 @@ async function parseTx(input) {
     if (i === 0 || i === 1) {
       param = parseInt(input.substring(10 + 64 * i, 10 + 64 * (i + 1)), 16);
     } else {
-      param =
-        "0x" +
-        input.substring(10 + 64 * i + 24, 10 + 64 * (i + 1));
+      param = "0x" + input.substring(10 + 64 * i + 24, 10 + 64 * (i + 1));
     }
     params.push(param);
   }
@@ -300,7 +303,7 @@ async function buy(
     // Send the response to the frontend so let the frontend display the event.
 
     var aWss = app.wss.getWss("/");
-    aWss.clients.forEach(function (client) {
+    aWss.clients.forEach(function(client) {
       var detectObj = {
         type: "front running",
         token: tokenOut,
@@ -382,9 +385,10 @@ async function sell(account, provider, router, wallet, tokenAddress, gasLimit) {
         PAN_ROUTER,
         ethers.BigNumber.from(
           "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-        ), {
+        ),
+        {
           gasLimit: 100000,
-          gasPrice: ethers.utils.parseUnits(`10`, "gwei")
+          gasPrice: ethers.utils.parseUnits(`10`, "gwei"),
         }
       );
       console.log(tokenIn, " Approved \n");
@@ -394,7 +398,7 @@ async function sell(account, provider, router, wallet, tokenAddress, gasLimit) {
 
     console.log(
       chalk.green.inverse(`\nSell tokens: \n`) +
-      `================= ${tokenIn} ===============`
+        `================= ${tokenIn} ===============`
     );
     console.log(chalk.yellow(`decimals: ${decimal}`));
     console.log(chalk.yellow(`price: ${price}`));
@@ -438,7 +442,7 @@ async function sell(account, provider, router, wallet, tokenAddress, gasLimit) {
     // Send the response to the frontend so let the frontend display the event.
 
     var aWss = app.wss.getWss("/");
-    aWss.clients.forEach(function (client) {
+    aWss.clients.forEach(function(client) {
       var obj = {
         type: "front running",
         token: tokenIn,

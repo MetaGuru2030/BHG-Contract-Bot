@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, FormControl } from "react-bootstrap";
 import { MDBDataTable,MDBDataTableV5  } from "mdbreact";
-import "./tokenList.css";
+import "./style/tokenList.css";
 import { addToken, deleteToken, listTokens } from "./api";
 import Web3 from "web3";
 import CONFIG from "./constant/config";

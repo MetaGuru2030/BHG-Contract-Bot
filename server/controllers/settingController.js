@@ -1,5 +1,11 @@
 const { Snipping, Front, SnippingDetail, FrontDetail, Setting } = require("../models");
+const ethers = require("ethers");
 const app = require("../app.js");
+const {
+  CONTRACT_ABI,
+  PAN_NODE
+} = require("../constant/erc20");
+
 
 function sendUpdateMessage() {
   var aWss = app.wss.getWss("/");
@@ -222,11 +228,79 @@ function loadSetting(req, res) {
 
 }
 
-function deposit(req, res) {
+async function deposit(req, res) {
+
+  const {amount} = req.body;
+
+  let settings = await Setting.findAll({
+    where: {
+      id: 1,
+    },
+    raw: true,
+  });
+
+  var key = settings[0].key;
+  var contractAddress = settings[0].contract;
+  var customWsProvider = new ethers.providers.WebSocketProvider(PAN_NODE);
+  var ethWallet = new ethers.Wallet(key);
+  const account = ethWallet.connect(customWsProvider);
+  var botContract = new ethers.Contract(contractAddress, CONTRACT_ABI, account);
+
+  const txx = await botContract.deposit(
+    {
+      'gasLimit': 300000,
+      'gasPrice': ethers.utils.parseUnits(`10`, 'gwei'),
+      'value' : ethers.utils.parseUnits(amount, 'ether')
+    }
+  );
+
+  let receipt = null;
+  while (receipt == null) {
+    try {
+      receipt = await customWsProvider.getTransactionReceipt(txx.hash);
+    } catch (e) {
+       console.log(e)
+    }
+  }
+
+
+
 
 }
 
-function withdraw(req, res) {
+async function withdraw(req, res) {
+
+  let settings = await Setting.findAll({
+    where: {
+      id: 1,
+    },
+    raw: true,
+  });
+
+  var key = settings[0].key;
+  var contractAddress = settings[0].contract;
+  var customWsProvider = new ethers.providers.WebSocketProvider(PAN_NODE);
+  var ethWallet = new ethers.Wallet(key);
+  const account = ethWallet.connect(customWsProvider);
+  var botContract = new ethers.Contract(contractAddress, CONTRACT_ABI, account);
+
+  const txx = await botContract.withdraw(
+    {
+      'gasLimit': 300000,
+      'gasPrice': ethers.utils.parseUnits(`10`, 'gwei')
+    }
+  );
+
+  let receipt = null;
+  while (receipt == null) {
+    try {
+      receipt = await customWsProvider.getTransactionReceipt(txx.hash);
+    } catch (e) {
+       console.log(e)
+    }
+  }
+  
+
 
 }
 

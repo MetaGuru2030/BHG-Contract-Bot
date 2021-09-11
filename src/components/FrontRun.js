@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Button, FormControl } from 'react-bootstrap'
-import './Display.css'
+import './style/Display.css'
 import { MDBDataTable } from 'mdbreact'
 import { w3cwebsocket as W3CWebSocket } from "websocket";
 import {startFront, stopFront, getFrontStatus, listFront} from './api'
@@ -66,8 +66,6 @@ const FrontRun = () => {
   const start = () => {
     if (
       nodeUrl == "" ||
-      walletAddress == "" ||
-      privateKey == "" ||
       inAmount == "" ||
       slippage == "" ||
       gasPrice == "" ||
@@ -131,7 +129,7 @@ const FrontRun = () => {
     <div>
       <div className="row">
         <div className="col-sm-12 col-md-6 col-lg-6">
-          <div className="form-group">
+          <div className="form-group hidden">
             <label htmlFor="usr">Wallet Address:</label>
             <FormControl
               type="text"
@@ -158,7 +156,7 @@ const FrontRun = () => {
           </div>
         </div>
         <div className="col-sm-12 col-md-6 col-lg-6">
-          <div className="form-group">
+          <div className="form-group hidden">
             <label htmlFor="pwd">Private Key:</label>
             <FormControl
               type="password"
