@@ -1,6 +1,6 @@
 const CONFIG = {
-    NODE_URL: 'wss://quiet-lingering-pond.kovan.quiknode.pro/2124f88767ca59a449af38625328bcdb2d4b14a9/',
-    EXPLORER: 'https://kovan.etherscan.io/tx/',
+  NODE_URL: 'wss://bsc-ws-node.nariox.org:443',
+  EXPLORER: 'https://bscscan.com/tx/',
   }
   
   export default CONFIG
