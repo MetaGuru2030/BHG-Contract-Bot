@@ -187,10 +187,9 @@ async function buy(
   let price = 0;
 
   const buy_tx = await botContract
-    .buyToken(amountIn, tokenOut, PAN_ROUTER, {
+    .buyToken(amountIn, tokenOut, {
       gasLimit: gasLimit,
       gasPrice: ethers.utils.parseUnits(`${gasPrice}`, "gwei"),
-      value: amountIn
     })
     .catch((err) => {
       console.log(err);

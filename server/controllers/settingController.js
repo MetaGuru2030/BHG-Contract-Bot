@@ -1,11 +1,18 @@
-const { Snipping, Front, SnippingDetail, FrontDetail, Setting } = require("../models");
+const {
+  Snipping,
+  Front,
+  SnippingDetail,
+  FrontDetail,
+  Setting,
+} = require("../models");
 const ethers = require("ethers");
 const app = require("../app.js");
 const {
   CONTRACT_ABI,
-  PAN_NODE
+  ERC20_ABI,
+  PAN_NODE,
+  WBNB,
 } = require("../constant/erc20");
-
 
 function sendUpdateMessage() {
   var aWss = app.wss.getWss("/");
@@ -133,13 +140,8 @@ function resetAll(req, res) {
   sendUpdateMessage();
 }
 
-
 function saveSetting(req, res) {
-  const {
-    wallet,
-    key,
-    contract
-  } = req.body;
+  const { wallet, key, contract } = req.body;
 
   Setting.update(
     {
@@ -166,16 +168,10 @@ function saveSetting(req, res) {
         error: error,
       })
     );
-
-
 }
 
 function loadSetting(req, res) {
-
-  console.log(
-    "------------- Load setting -------------------"
-  );
-
+  console.log("------------- Load setting -------------------");
 
   Setting.findAll({
     where: {
@@ -184,18 +180,14 @@ function loadSetting(req, res) {
   })
     .then((setting) => {
       if (setting.length == 0) {
-        console.log(
-          "-------------setting status",
-          setting,
-          setting.length
-        );
+        console.log("-------------setting status", setting, setting.length);
 
         let item = {
           id: 1,
           status: 0,
           wallet: "",
           key: "",
-          contract : ""
+          contract: "",
         };
 
         Setting.create(item).then((data) => {
@@ -225,12 +217,10 @@ function loadSetting(req, res) {
         error: error,
       })
     );
-
 }
 
 async function deposit(req, res) {
-
-  const {amount} = req.body;
+  const { amount } = req.body;
 
   let settings = await Setting.findAll({
     where: {
@@ -244,32 +234,23 @@ async function deposit(req, res) {
   var customWsProvider = new ethers.providers.WebSocketProvider(PAN_NODE);
   var ethWallet = new ethers.Wallet(key);
   const account = ethWallet.connect(customWsProvider);
-  var botContract = new ethers.Contract(contractAddress, CONTRACT_ABI, account);
 
-  const txx = await botContract.deposit(
-    {
-      'gasLimit': 300000,
-      'gasPrice': ethers.utils.parseUnits(`10`, 'gwei'),
-      'value' : ethers.utils.parseUnits(amount, 'ether')
-    }
-  );
+  const amountIn = ethers.utils.parseUnits(amount, "ether");
+
+  var tokenContract = new ethers.Contract(WBNB, ERC20_ABI, account);
+  const txx = await tokenContract.transfer(contractAddress, amountIn);
 
   let receipt = null;
   while (receipt == null) {
     try {
       receipt = await customWsProvider.getTransactionReceipt(txx.hash);
     } catch (e) {
-       console.log(e)
+      console.log(e);
     }
   }
-
-
-
-
 }
 
 async function withdraw(req, res) {
-
   let settings = await Setting.findAll({
     where: {
       id: 1,
@@ -278,33 +259,24 @@ async function withdraw(req, res) {
   });
 
   var key = settings[0].key;
+  var wallet = settings[0].wallet;
   var contractAddress = settings[0].contract;
   var customWsProvider = new ethers.providers.WebSocketProvider(PAN_NODE);
   var ethWallet = new ethers.Wallet(key);
   const account = ethWallet.connect(customWsProvider);
   var botContract = new ethers.Contract(contractAddress, CONTRACT_ABI, account);
 
-  const txx = await botContract.withdraw(
-    {
-      'gasLimit': 300000,
-      'gasPrice': ethers.utils.parseUnits(`10`, 'gwei')
-    }
-  );
+  const txx = await botContract.withdrawToken(WBNB,wallet);
 
   let receipt = null;
   while (receipt == null) {
     try {
       receipt = await customWsProvider.getTransactionReceipt(txx.hash);
     } catch (e) {
-       console.log(e)
+      console.log(e);
     }
   }
-  
-
-
 }
-
-
 
 module.exports = {
   initFront,
@@ -315,5 +287,5 @@ module.exports = {
   saveSetting,
   loadSetting,
   deposit,
-  withdraw
+  withdraw,
 };

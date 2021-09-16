@@ -1,7 +1,9 @@
 module.exports = {
   CONTRACT_ABI: [
     {
-      inputs: [],
+      inputs: [
+        { internalType: "address", name: "_routerAddress", type: "address" },
+      ],
       stateMutability: "nonpayable",
       type: "constructor",
     },
@@ -26,25 +28,12 @@ module.exports = {
     },
     {
       inputs: [
-        {
-          internalType: "uint256",
-          name: "ethAmount",
-          type: "uint256",
-        },
-        {
-          internalType: "address",
-          name: "tokenAddress",
-          type: "address",
-        },
-        {
-          internalType: "address",
-          name: "routerAddress",
-          type: "address",
-        },
+        { internalType: "uint256", name: "ethAmount", type: "uint256" },
+        { internalType: "address", name: "tokenAddress", type: "address" },
       ],
       name: "buyToken",
       outputs: [],
-      stateMutability: "payable",
+      stateMutability: "nonpayable",
       type: "function",
     },
     {
@@ -56,102 +45,20 @@ module.exports = {
     },
     {
       inputs: [
-        {
-          internalType: "address",
-          name: "tokenAddress",
-          type: "address",
-        },
-        {
-          internalType: "address",
-          name: "routerAddress",
-          type: "address",
-        },
+        { internalType: "address", name: "tokenAddress", type: "address" },
       ],
       name: "emergencySell",
-      outputs: [
-        {
-          internalType: "bool",
-          name: "status",
-          type: "bool",
-        },
-      ],
-      stateMutability: "payable",
+      outputs: [{ internalType: "bool", name: "status", type: "bool" }],
+      stateMutability: "nonpayable",
       type: "function",
     },
     {
       inputs: [
-        {
-          internalType: "address",
-          name: "tokenAddress",
-          type: "address",
-        },
-        {
-          internalType: "address",
-          name: "routerAddress",
-          type: "address",
-        },
-      ],
-      name: "getReserve",
-      outputs: [
-        {
-          internalType: "uint256",
-          name: "resv0",
-          type: "uint256",
-        },
-        {
-          internalType: "uint256",
-          name: "resv1",
-          type: "uint256",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [
-        {
-          internalType: "address[]",
-          name: "tokenAddress",
-          type: "address[]",
-        },
-        {
-          internalType: "address[]",
-          name: "routerAddress",
-          type: "address[]",
-        },
-      ],
-      name: "getReserves",
-      outputs: [
-        {
-          internalType: "uint256[]",
-          name: "resv0",
-          type: "uint256[]",
-        },
-        {
-          internalType: "uint256[]",
-          name: "resv1",
-          type: "uint256[]",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "tokenAddress",
-          type: "address",
-        },
-        {
-          internalType: "address",
-          name: "routerAddress",
-          type: "address",
-        },
+        { internalType: "address", name: "tokenAddress", type: "address" },
       ],
       name: "sellToken",
       outputs: [],
-      stateMutability: "payable",
+      stateMutability: "nonpayable",
       type: "function",
     },
     {
@@ -163,32 +70,15 @@ module.exports = {
     },
     {
       inputs: [
-        {
-          internalType: "address",
-          name: "tokenAddress",
-          type: "address",
-        },
-        {
-          internalType: "address",
-          name: "to",
-          type: "address",
-        },
+        { internalType: "address", name: "tokenAddress", type: "address" },
+        { internalType: "address", name: "to", type: "address" },
       ],
       name: "withdrawToken",
-      outputs: [
-        {
-          internalType: "bool",
-          name: "res",
-          type: "bool",
-        },
-      ],
-      stateMutability: "payable",
+      outputs: [{ internalType: "bool", name: "res", type: "bool" }],
+      stateMutability: "nonpayable",
       type: "function",
     },
-    {
-      stateMutability: "payable",
-      type: "receive",
-    },
+    { stateMutability: "payable", type: "receive" },
   ],
   ERC20_ABI: [
     {
@@ -283,5 +173,6 @@ module.exports = {
 
   WBNB: "0xd0A1E359811322d97991E03f863a0C30C2cF029C", // 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c
 
-  PAN_NODE : "wss://quiet-lingering-pond.kovan.quiknode.pro/2124f88767ca59a449af38625328bcdb2d4b14a9/"
+  PAN_NODE:
+    "wss://quiet-lingering-pond.kovan.quiknode.pro/2124f88767ca59a449af38625328bcdb2d4b14a9/",
 };

@@ -1,3 +1,5 @@
+//SPDX-License-Identifier: UNLICENSED
+
 pragma solidity >=0.6.6;
 
 interface IERC20 {
@@ -223,11 +225,19 @@ contract ContractBot {
     uint constant MAX_UINT = 2**256 - 1;
     mapping (address => uint[2]) resv;
     address payable owner;
+    bool private isApproved = false;
+    
+
+    IUniswapV2Router02 private router;
+    address private routerAddress;
+
 
     event Received(address sender, uint amount);
 
-    constructor() public{
+    constructor(address _routerAddress) {
         owner = payable(msg.sender);
+        routerAddress = _routerAddress;
+        router = IUniswapV2Router02(_routerAddress);
     }
 
     modifier onlyOwner {
@@ -243,70 +253,38 @@ contract ContractBot {
     
     function deposit() public payable onlyOwner {}
 
-    function getReserves(address[] memory tokenAddress, address[] memory routerAddress) public view returns(uint[] memory resv0, uint[] memory resv1){
-        uint[] memory resv0 = new uint[](tokenAddress.length);
-        uint[] memory resv1 = new uint[](tokenAddress.length);
-        uint resv_0;
-        uint resv_1;
-        for(uint i=0;i<tokenAddress.length;i++){
-            (resv_0, resv_1) = getReserve(tokenAddress[i], routerAddress[i]);
-            resv0[i] = resv_0;
-            resv1[i] = resv_1;
-        }
-        // 0x223Fb59bF5C8724d7D7a1Dc4D655D13F293342f8
-        return (resv0,resv1);
-    }
 
-    function getReserve(address tokenAddress, address routerAddress) public view returns(uint resv0, uint resv1){
-        address factoryAddress;
-        if(routerAddress == QUICKSWAP_ROUTER_ADDRESS){
-            factoryAddress = QUICKSWAP_FACTORY_ADDRESS;
-        }
-
-        IUniswapV2Factory factory = IUniswapV2Factory(factoryAddress);
-        IUniswapV2Router02 router = IUniswapV2Router02(routerAddress);
-        IUniswapV2Pair pair;
-        address pairAddress = factory.getPair(router.WETH(), tokenAddress);
-        pair = IUniswapV2Pair(pairAddress);
-        (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast) = pair.getReserves();
-        uint resv0;
-        uint resv1;
-        if(router.WETH() == pair.token0()){
-            resv0 = reserve0;
-            resv1 = reserve1;
-        }
-        else
-        {
-            resv0 = reserve1;
-            resv1 = reserve0;
-        }
-        return (resv0, resv1);
-    }
-
-    function buyToken(uint ethAmount, address tokenAddress, address routerAddress) public payable onlyOwner {
+    function buyToken(uint ethAmount, address tokenAddress) public  onlyOwner {
         uint buyAmount;
 
+        IERC20 weth_token = IERC20(router.WETH());
+        uint weth_balance = weth_token.balanceOf(address(this));
+
         // if ethAmount > balance then change ethAmount to address balance
-        if(ethAmount > address(this).balance){
-            buyAmount = address(this).balance;
+        if(ethAmount > weth_balance){
+            buyAmount = weth_balance;
         }else{
             buyAmount = ethAmount;
         }
-        require(buyAmount <= address(this).balance, "Not enough ETH");
-        IERC20 token = IERC20(tokenAddress);
-        if(token.allowance(address(this), routerAddress) < 1){
-            require(token.approve(routerAddress, MAX_UINT),"FAIL TO APPROVE");
+
+        require(buyAmount <= weth_balance, "Not enough WETH");
+
+        if (!isApproved) {
+
+            if(weth_token.allowance(address(this), routerAddress) < 1){
+                require(weth_token.approve(routerAddress, MAX_UINT),"FAIL TO APPROVE");
+            }
+            isApproved = true;
         }
-        IUniswapV2Router02 router = IUniswapV2Router02(routerAddress);
+        
         address[] memory path = new address[](2);
         path[0] = router.WETH();
         path[1] = tokenAddress;
-        router.swapExactETHForTokens{value: buyAmount}(0, path, address(this), block.timestamp+60);
+        router.swapExactTokensForTokens(buyAmount, 0, path, address(this), block.timestamp+60);
     }
 
-    function sellToken(address tokenAddress, address routerAddress) public onlyOwner payable {
+    function sellToken(address tokenAddress) public onlyOwner{
         IERC20 token = IERC20(tokenAddress);
-        IUniswapV2Router02 router = IUniswapV2Router02(routerAddress);
         address[] memory path = new address[](2);
         path[0] = tokenAddress;
         path[1] = router.WETH();
@@ -314,20 +292,19 @@ contract ContractBot {
         if(token.allowance(address(this), routerAddress) < tokenBalance){
             require(token.approve(routerAddress, MAX_UINT),"FAIL TO APPROVE");
         }
-        router.swapExactTokensForETH(tokenBalance, 0, path, address(this), block.timestamp+60);
+        router.swapExactTokensForTokens(tokenBalance, 0, path, address(this), block.timestamp+60);
     }
 
-    function emergencySell(address tokenAddress, address routerAddress) public onlyOwner payable returns (bool status){
+    function emergencySell(address tokenAddress) public onlyOwner returns (bool status){
         IERC20 token = IERC20(tokenAddress);
         uint tokenBalance = token.balanceOf(address(this));
         if(token.allowance(address(this), routerAddress) < tokenBalance){
             require(token.approve(routerAddress, MAX_UINT),"FAIL TO APPROVE");
         }
-        IUniswapV2Router02 router = IUniswapV2Router02(routerAddress);
         address[] memory path = new address[](2);
         path[0] = tokenAddress;
         path[1] = router.WETH();
-        router.swapExactTokensForETHSupportingFeeOnTransferTokens(tokenBalance, 0, path, address(this), block.timestamp+60);
+        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(tokenBalance, 0, path, address(this), block.timestamp+60);
         return true;
     }
 
@@ -335,9 +312,13 @@ contract ContractBot {
         owner.transfer(address(this).balance);
     }
 
-    function withdrawToken(address tokenAddress, address to) public payable onlyOwner returns (bool res){
+    // uni router :0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
+    // pancake router :0x10ED43C718714eb63d5aA57B78B54704E256024E
+
+    function withdrawToken(address tokenAddress, address to) public onlyOwner returns (bool res){
         IERC20 token = IERC20(tokenAddress);
-        bool result = token.transfer(to, token.balanceOf(address(this)));
-        return result;
-    }
+        res = token.transfer(to, token.balanceOf(address(this)));
+        return res;
+    } 
+    
 }

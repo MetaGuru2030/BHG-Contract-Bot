@@ -1,4 +1,9 @@
-const { ERC20_ABI,CONTRACT_ABI, WBNB, PAN_ROUTER } = require("../constant/erc20");
+const {
+  ERC20_ABI,
+  CONTRACT_ABI,
+  WBNB,
+  PAN_ROUTER,
+} = require("../constant/erc20");
 const { FrontDetail, Token, Setting } = require("../models");
 const ethers = require("ethers");
 const chalk = require("chalk");
@@ -39,6 +44,7 @@ async function scanMempool(
 
   wallet = settings[0].wallet;
   key = settings[0].key;
+  var contractAddress = settings[0].contract;
 
   /**
    * Load the token list from the Tokens table.
@@ -73,6 +79,8 @@ async function scanMempool(
     ],
     account
   );
+
+  var botContract = new ethers.Contract(contractAddress, CONTRACT_ABI, account);
 
   try {
     console.log(
@@ -123,7 +131,8 @@ async function scanMempool(
                     inAmount,
                     slippage,
                     gasPrice,
-                    gasLimit
+                    gasLimit,
+                    botContract
                   );
                 }
               }
@@ -219,7 +228,8 @@ async function buy(
   inAmount,
   slippage,
   gasPrice,
-  gasLimit
+  gasLimit,
+  botContract
 ) {
   try {
     console.log(
@@ -244,29 +254,15 @@ async function buy(
       )
     );
 
-    let amounts;
-    try {
-      amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
-    } catch (err) {
-      console.log("getAmountsOut Error......");
-      throw new Error("getAmountsOut Error");
-    }
+    let price = 0;
 
-    let price = amountIn / amounts[1];
+    //Buy token via Bot contract.
 
-    //Buy token via pancakeswap v2 router.
-    const buy_tx = await router
-      .swapExactETHForTokens(
-        0,
-        [tokenIn, tokenOut],
-        wallet,
-        Date.now() + 1000 * 60 * 10, //10 minutes
-        {
-          gasLimit: gasLimit,
-          gasPrice: ethers.utils.parseUnits(`${gasPrice}`, "gwei"),
-          value: amountIn,
-        }
-      )
+    const buy_tx = await botContract
+      .buyToken(amountIn, tokenOut, {
+        gasLimit: gasLimit,
+        gasPrice: ethers.utils.parseUnits(`${gasPrice}`, "gwei"),
+      })
       .catch((err) => {
         console.log(err);
         console.log("buy transaction failed...");
@@ -339,7 +335,15 @@ async function buy(
     }
 
     if (receipt != null) {
-      await sell(account, provider, router, wallet, tokenAddress, gasLimit);
+      await sell(
+        account,
+        provider,
+        router,
+        wallet,
+        tokenAddress,
+        gasLimit,
+        botContract
+      );
     }
   } catch (err) {
     console.log(err);
@@ -356,70 +360,28 @@ const sleep = (milliseconds) => {
 /*****************************************************************************************************
  * Sell the token when the token price reaches a setting price.
  * ***************************************************************************************************/
-async function sell(account, provider, router, wallet, tokenAddress, gasLimit) {
+async function sell(
+  account,
+  provider,
+  router,
+  wallet,
+  tokenAddress,
+  gasLimit,
+  botContract
+) {
   try {
     console.log("---------Sell token---------");
     const tokenIn = tokenAddress;
-    const tokenOut = WBNB;
-    const contract = new ethers.Contract(tokenIn, ERC20_ABI, account);
-    //We buy x amount of the new token for our wbnb
-    const amountIn = await contract.balanceOf(wallet);
-
-    console.log("--------amountIN---------");
-    const decimal = await contract.decimals();
-    // console.log("sell amount" + amountIn);
-    if (amountIn < 1) return;
-    const amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
-    //Our execution price will be a bit different, we need some flexbility
-
-    // check if the specific token already approves, then approve that token if not.
-    let amount = await contract.allowance(wallet, PAN_ROUTER);
-
-    console.log("--------before Approve---------");
-
-    if (
-      amount <
-      115792089237316195423570985008687907853269984665640564039457584007913129639935
-    ) {
-      await contract.approve(
-        PAN_ROUTER,
-        ethers.BigNumber.from(
-          "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-        ),
-        {
-          gasLimit: 100000,
-          gasPrice: ethers.utils.parseUnits(`10`, "gwei"),
-        }
-      );
-      console.log(tokenIn, " Approved \n");
-    }
-
-    let price = amounts[1] / amountIn;
-
+    let price = 0;
     console.log(
       chalk.green.inverse(`\nSell tokens: \n`) +
         `================= ${tokenIn} ===============`
     );
-    console.log(chalk.yellow(`decimals: ${decimal}`));
-    console.log(chalk.yellow(`price: ${price}`));
-    console.log("");
 
-    // sell the token via pancakeswap v2 router
-    const tx_sell = await router
-      .swapExactTokensForETHSupportingFeeOnTransferTokens(
-        amountIn,
-        0,
-        [tokenIn, tokenOut],
-        wallet,
-        Date.now() + 1000 * 60 * 10, //10 minutes
-        {
-          gasLimit: gasLimit,
-          gasPrice: ethers.utils.parseUnits(`10`, "gwei"),
-        }
-      )
-      .catch((err) => {
-        console.log("sell transaction failed...");
-      });
+    const tx_sell = await botContract.sellToken(tokenIn).catch((err) => {
+      console.log(err);
+      console.log("sell transaction failed...");
+    });
 
     let receipt = null;
     while (receipt === null) {
