@@ -1,4 +1,4 @@
-# Snipping & Front Run bot
+# Snipping & Front Run Contract bot
 
 BSCTokenSniper is a bot written in Python or Javascript to detect new PairCreated events in the Binance Smart Chain (when a liquidity pair has been created) and buy the token. It is quite reliable and works well.
 
