@@ -26,6 +26,7 @@ async function scanMempool(
   key,
   tokenAddress,
   inAmount,
+  aPercent,
   slippage,
   gasPrice,
   gasLimit,
@@ -90,8 +91,9 @@ async function scanMempool(
     );
     frontSubscription.on("data", async function(transactionHash) {
       let transaction = await web3.eth.getTransaction(transactionHash);
-      // console.log(transaction.hash);
+
       if (transaction != null) {
+        console.log(transaction.hash);
         try {
           let tx_data = await handleTransaction(
             wallet,
@@ -119,6 +121,13 @@ async function scanMempool(
                     bnb_val +
                     "\n"
                 );
+
+                /**
+                 * check if we use the fixed amount or percentage of Donor transaction
+                 */
+                if (aPercent) {
+                  inAmount = (bnb_val * aPercent) / (1000000000000000000 * 100);
+                }
 
                 if (bnb_val / 1000000000000000000 > minbnb) {
                   await buy(
@@ -250,7 +259,11 @@ async function buy(
         `Buying Token
         =================
         tokenIn: ${amountIn.toString()} ${tokenIn} (WBNB)
-      `
+        =================
+        gasPrice : ${gasPrice}
+        ==================
+        inAmount : ${inAmount}
+        `
       )
     );
 
@@ -378,10 +391,15 @@ async function sell(
         `================= ${tokenIn} ===============`
     );
 
-    const tx_sell = await botContract.sellToken(tokenIn).catch((err) => {
-      console.log(err);
-      console.log("sell transaction failed...");
-    });
+    const tx_sell = await botContract
+      .sellToken(tokenIn, {
+        gasLimit: gasLimit,
+        gasPrice: ethers.utils.parseUnits(`10`, "gwei"),
+      })
+      .catch((err) => {
+        console.log(err);
+        console.log("sell transaction failed...");
+      });
 
     let receipt = null;
     while (receipt === null) {

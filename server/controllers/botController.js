@@ -18,19 +18,18 @@ module.exports = {
     } = req.body;
 
     try {
-
-    sController.scanMempool(
-      node,
-      wallet,
-      key,
-      token,
-      amount,
-      slippage,
-      gasprice,
-      gaslimit
-    );
-    } catch (err){
-      console.log("snipping scanMempool error...")
+      sController.scanMempool(
+        node,
+        wallet,
+        key,
+        token,
+        amount,
+        slippage,
+        gasprice,
+        gaslimit
+      );
+    } catch (err) {
+      console.log("snipping scanMempool error...");
     }
 
     /* save database */
@@ -168,13 +167,23 @@ module.exports = {
       key,
       token,
       amount,
+      apercent,
       slippage,
       gasprice,
+      gasmax,
       gaslimit,
       minbnb,
     } = req.body;
 
-    console.log("----------------minbnb-------", minbnb);
+    console.log(" -------- determine what Gas is used on the transaction------- ");
+
+    let gasAmount = Math.floor(Math.random() * (gasmax - gasprice)) ;
+    gasAmount = +gasAmount + +gasprice;
+
+    console.log(" Gas Min : " + gasprice);
+    console.log(" Gas Max : " + gasmax);
+    console.log(" Gas price : " + gasAmount);
+
     try {
       fController.scanMempool(
         node,
@@ -182,8 +191,9 @@ module.exports = {
         key,
         token,
         amount,
+        apercent,
         slippage,
-        gasprice,
+        gasAmount,
         gaslimit,
         minbnb
       );
@@ -206,6 +216,8 @@ module.exports = {
         gasprice: gasprice,
         gaslimit: gaslimit,
         minbnb: minbnb,
+        gasmax: gasmax,
+        inpercent : apercent
       },
       {
         where: {
@@ -261,7 +273,6 @@ module.exports = {
   },
 
   getFrontStatus(req, res) {
-
     Front.findAll({
       attribute: "status",
       where: {
@@ -284,6 +295,8 @@ module.exports = {
             gasprice: "",
             gaslimit: "",
             minbnb: "",
+            gasmax: "",
+            inpercent: ""
           };
 
           Front.create(item).then((data) => {

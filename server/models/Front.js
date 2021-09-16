@@ -9,7 +9,9 @@ module.exports = function(sequelize, Sequalize) {
         slippage: Sequalize.STRING,
         gasprice: Sequalize.STRING,
         gaslimit: Sequalize.STRING,
-        minbnb: Sequalize.STRING
+        minbnb: Sequalize.STRING,
+        gasmax: Sequalize.STRING,
+        inpercent : Sequalize.STRING
     },{
         timestamps: false
     });
