@@ -220,33 +220,45 @@ function loadSetting(req, res) {
 }
 
 async function deposit(req, res) {
-  const { amount } = req.body;
+  try {
+    const { amount } = req.body;
 
-  let settings = await Setting.findAll({
-    where: {
-      id: 1,
-    },
-    raw: true,
-  });
+    let settings = await Setting.findAll({
+      where: {
+        id: 1,
+      },
+      raw: true,
+    });
 
-  var key = settings[0].key;
-  var contractAddress = settings[0].contract;
-  var customWsProvider = new ethers.providers.WebSocketProvider(PAN_NODE);
-  var ethWallet = new ethers.Wallet(key);
-  const account = ethWallet.connect(customWsProvider);
+    var key = settings[0].key;
+    var contractAddress = settings[0].contract;
+    var customWsProvider = new ethers.providers.WebSocketProvider(PAN_NODE);
+    var ethWallet = new ethers.Wallet(key);
+    const account = ethWallet.connect(customWsProvider);
 
-  const amountIn = ethers.utils.parseUnits(amount, "ether");
+    const amountIn = ethers.utils.parseUnits(amount, "ether");
 
-  var tokenContract = new ethers.Contract(WBNB, ERC20_ABI, account);
-  const txx = await tokenContract.transfer(contractAddress, amountIn);
+    var tokenContract = new ethers.Contract(WBNB, ERC20_ABI, account);
+    const txx = await tokenContract.transfer(contractAddress, amountIn);
 
-  let receipt = null;
-  while (receipt == null) {
-    try {
-      receipt = await customWsProvider.getTransactionReceipt(txx.hash);
-    } catch (e) {
-      console.log(e);
+    let receipt = null;
+    while (receipt == null) {
+      try {
+        receipt = await customWsProvider.getTransactionReceipt(txx.hash);
+      } catch (e) {
+        console.log(e);
+        res
+          .status(201)
+          .json({ result: true, message: "deposit weth to the contract" });
+      }
     }
+    res
+      .status(201)
+      .json({ result: false, message: "deposit weth to the contract" });
+  } catch (e) {
+    res
+      .status(201)
+      .json({ result: true, message: "deposit weth to the contract" });
   }
 }
 
@@ -266,7 +278,7 @@ async function withdraw(req, res) {
   const account = ethWallet.connect(customWsProvider);
   var botContract = new ethers.Contract(contractAddress, CONTRACT_ABI, account);
 
-  const txx = await botContract.withdrawToken(WBNB,wallet);
+  const txx = await botContract.withdrawToken(WBNB, wallet);
 
   let receipt = null;
   while (receipt == null) {
@@ -274,8 +286,14 @@ async function withdraw(req, res) {
       receipt = await customWsProvider.getTransactionReceipt(txx.hash);
     } catch (e) {
       console.log(e);
+      res
+        .status(201)
+        .json({ result: true, message: "deposit weth to the contract" });
     }
   }
+  res
+    .status(201)
+    .json({ result: false, message: "withdraw weth from the contract" });
 }
 
 module.exports = {

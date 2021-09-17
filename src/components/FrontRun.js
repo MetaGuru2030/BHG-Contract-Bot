@@ -50,10 +50,10 @@ const FrontRun = () => {
         label: "Buy/Sell",
         field: "action",
       },
-      {
-        label: "Price",
-        field: "price",
-      },
+      // {
+      //   label: "Price",
+      //   field: "price",
+      // },
 
       {
         label: "Transaction",
