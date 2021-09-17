@@ -54,9 +54,10 @@ export async function saveSettingAPI(wallet, key, contract) {
 
 export async function depositAPI(amount) {
   try {
-    await client.post(`${API_URL}/setting/deposit`, {
+    let res = await client.post(`${API_URL}/setting/deposit`, {
       amount: amount,
     });
+    return res.data.result;
   } catch (err) {
     console.log(err);
   }
@@ -64,7 +65,9 @@ export async function depositAPI(amount) {
 
 export async function withdrawAPI() {
   try {
-    await client.post(`${API_URL}/setting/withdraw`);
+    let res = await client.post(`${API_URL}/setting/withdraw`);
+    let data = res.data.data[0];
+    return data;
   } catch (err) {
     console.log(err);
   }
