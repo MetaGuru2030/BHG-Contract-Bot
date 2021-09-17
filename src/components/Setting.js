@@ -46,11 +46,18 @@ const Setting = () => {
   };
 
   const getBalance = async (_wallet, _contract) => {
-    let tokenContract = new wssWeb3.eth.Contract(abi, CONFIG.WBNB);
-    let wBal = await tokenContract.methods.balanceOf(_wallet).call();
-    let cBal = await tokenContract.methods.balanceOf(_contract).call();
-    setWBalance( Math.floor(wBal/1e18 * 10000 )/10000);
-    setCBalance(Math.floor(cBal/1e18 * 10000 )/10000);
+    if (_wallet && _contract) {
+      try {
+      let tokenContract = new wssWeb3.eth.Contract(abi, CONFIG.WBNB);
+      let wBal = await tokenContract.methods.balanceOf(_wallet).call();
+      let cBal = await tokenContract.methods.balanceOf(_contract).call();
+      setWBalance(Math.floor((wBal / 1e18) * 10000) / 10000);
+      setCBalance(Math.floor((cBal / 1e18) * 10000) / 10000);
+      }
+      catch(err) {
+        console.log(err);
+      }
+    }
   };
 
   useEffect(() => {
