@@ -215,7 +215,7 @@ module.exports = {
         slippage,
         gasAmount,
         gaslimit,
-        minbnb,
+        min_bnb,
         ispercent
       );
     } catch (err) {
