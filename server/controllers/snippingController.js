@@ -68,7 +68,6 @@ async function scanMempool(
     snipSubscription.on("data", (tx) => {
       customWsProvider.getTransaction(tx).then(async function(transaction) {
         if (transaction != null) {
-          console.log(transaction.hash);
           try {
             let txData = transaction.data;
             let txFunc = txData.substring(0, 10);

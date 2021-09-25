@@ -64,6 +64,11 @@ const FrontRun = () => {
         label: "Transaction",
         field: "transaction",
       },
+
+      {
+        label : "Profit",
+        field : "price"
+      }
     ],
     rows: rows,
   };
@@ -71,7 +76,8 @@ const FrontRun = () => {
   const start = () => {
     if (
       nodeUrl == "" ||
-      (inAmount == "" && inPercent == "") ||
+      inAmount == "" ||
+      inPercent == "" ||
       slippage == "" ||
       gasPrice == "" ||
       gasLimit == "" ||
@@ -220,9 +226,6 @@ const FrontRun = () => {
           className="short-input"
           value={inAmount}
           onChange={(e) => {
-            if (e.target.value > 0) {
-              setInPercent("");
-            }
             setInAmount(e.target.value);
           }}
         />
@@ -236,9 +239,6 @@ const FrontRun = () => {
           placeholder="10"
           value={inPercent}
           onChange={(e) => {
-            if (e.target.value > 0) {
-              setInAmount("");
-            }
             setInPercent(e.target.value);
           }}
           disabled={isPercent == 1 ? false : true}
@@ -265,7 +265,7 @@ const FrontRun = () => {
           onChange={(e) => {
             setGasPrice(e.target.value);
           }}
-          disabled={isAjustGas == 1? false : true}
+          disabled={isAjustGas == 1 ? false : true}
         />
 
         <label htmlFor="pwd">Gas Price (Max):</label>
@@ -278,7 +278,7 @@ const FrontRun = () => {
           onChange={(e) => {
             setGasMaxPrice(e.target.value);
           }}
-          disabled={isAjustGas == 1? false : true}
+          disabled={isAjustGas == 1 ? false : true}
         />
 
         <label htmlFor="pwd">Gas Limit:</label>
