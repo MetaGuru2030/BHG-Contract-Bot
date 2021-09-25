@@ -173,6 +173,10 @@ module.exports = {
       gasmax,
       gaslimit,
       minbnb,
+      minprofit,
+      ispercent,
+      isadjustgas,
+      isprofit
     } = req.body;
 
     console.log(" -------- determine what Gas is used on the transaction------- ");
@@ -185,18 +189,18 @@ module.exports = {
     console.log(" Gas price : " + gasAmount);
 
     try {
-      fController.scanMempool(
-        node,
-        wallet,
-        key,
-        token,
-        amount,
-        apercent,
-        slippage,
-        gasAmount,
-        gaslimit,
-        minbnb
-      );
+      // fController.scanMempool(
+      //   node,
+      //   wallet,
+      //   key,
+      //   token,
+      //   amount,
+      //   apercent,
+      //   slippage,
+      //   gasAmount,
+      //   gaslimit,
+      //   minbnb
+      // );
     } catch (err) {
       console.log("Front scan mempool error......");
     }
@@ -217,7 +221,11 @@ module.exports = {
         gaslimit: gaslimit,
         minbnb: minbnb,
         gasmax: gasmax,
-        inpercent : apercent
+        inpercent : apercent,
+        minprofit : minprofit,
+        ispercent : ispercent,
+        isadjustgas : isadjustgas,
+        isprofit : isprofit
       },
       {
         where: {
@@ -296,7 +304,11 @@ module.exports = {
             gaslimit: "",
             minbnb: "",
             gasmax: "",
-            inpercent: ""
+            inpercent: "",
+            ispercent : "1",
+            isadjustgas : "1",
+            isprofit: "1",
+            minprofit : "0.2"
           };
 
           Front.create(item).then((data) => {
