@@ -117,7 +117,7 @@ async function scanMempool(
                     ", method : " +
                     tx_data[0] +
                     ", amount of BNB : " +
-                    bnb_val +
+                    bnb_val/1e18 +
                     "\n"
                 );
 
