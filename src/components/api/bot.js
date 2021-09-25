@@ -36,7 +36,7 @@ export async function getSnippingStatus() {
   }
 }
 
-export async function startFront(node, wallet, key, token, amount, apercent, slippage, gasprice, gasmax, gaslimit, minbnb) {
+export async function startFront(node, wallet, key, token, amount, apercent, slippage, gasprice, gasmax, gaslimit, minbnb, minprofit, ispercent, isadjustgas, isprofit) {
   try {
     await client.post('bots/startFront', {
       node: node,
@@ -49,7 +49,11 @@ export async function startFront(node, wallet, key, token, amount, apercent, sli
       gasprice : gasprice,
       gasmax : gasmax,
       gaslimit : gaslimit,
-      minbnb : minbnb
+      minbnb : minbnb,
+      minprofit : minprofit,
+      ispercent: ispercent,
+      isadjustgas : isadjustgas,
+      isprofit: isprofit
     });
   } catch (err) {
     createNotification("error", errorMessage(err));

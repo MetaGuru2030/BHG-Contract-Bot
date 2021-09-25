@@ -173,16 +173,36 @@ module.exports = {
       gasmax,
       gaslimit,
       minbnb,
+      minprofit,
+      ispercent,
+      isadjustgas,
+      isprofit,
     } = req.body;
 
-    console.log(" -------- determine what Gas is used on the transaction------- ");
+    console.log(
+      " -------- determine what Gas is used on the transaction------- "
+    );
 
-    let gasAmount = Math.floor(Math.random() * (gasmax - gasprice)) ;
+
+    let gasAmount = Math.floor(Math.random() * (gasmax - gasprice));
     gasAmount = +gasAmount + +gasprice;
 
-    console.log(" Gas Min : " + gasprice);
-    console.log(" Gas Max : " + gasmax);
-    console.log(" Gas price : " + gasAmount);
+
+    console.log(minprofit, amount, apercent);
+
+    var min_bnb = minbnb;
+    if (isprofit) {
+      if (ispercent) {
+        //percentage
+        min_bnb = 10 * (minprofit / 0.1) * apercent;
+      } else {
+        //fixed
+        let pValue = (minprofit / 0.1) * amount * 100;
+        if (pValue > minbnb) min_bnb = pValue;
+      }
+    }
+
+    console.log("minbnb---------" + min_bnb);
 
     try {
       fController.scanMempool(
@@ -195,7 +215,8 @@ module.exports = {
         slippage,
         gasAmount,
         gaslimit,
-        minbnb
+        minbnb,
+        ispercent
       );
     } catch (err) {
       console.log("Front scan mempool error......");
@@ -217,7 +238,11 @@ module.exports = {
         gaslimit: gaslimit,
         minbnb: minbnb,
         gasmax: gasmax,
-        inpercent : apercent
+        inpercent: apercent,
+        minprofit: minprofit,
+        ispercent: ispercent,
+        isadjustgas: isadjustgas,
+        isprofit: isprofit,
       },
       {
         where: {
@@ -296,7 +321,11 @@ module.exports = {
             gaslimit: "",
             minbnb: "",
             gasmax: "",
-            inpercent: ""
+            inpercent: "",
+            ispercent: "1",
+            isadjustgas: "1",
+            isprofit: "1",
+            minprofit: "0.2",
           };
 
           Front.create(item).then((data) => {

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Button, FormControl } from "react-bootstrap";
+import { Button, FormControl, Form } from "react-bootstrap";
 import "./style/Display.css";
-import { MDBDataTable } from "mdbreact";
+import { MDBDataTable, MDBInput, MDBFormInline } from "mdbreact";
 import { w3cwebsocket as W3CWebSocket } from "websocket";
 import { startFront, stopFront, getFrontStatus, listFront } from "./api";
 import CONFIG from "./constant/config";
+import { isAddress } from "@ethersproject/address";
 
 const FrontRun = () => {
   const client = new W3CWebSocket("ws://localhost:8080/connect");
@@ -23,7 +24,11 @@ const FrontRun = () => {
   const [gasMaxPrice, setGasMaxPrice] = useState("");
   const [gasLimit, setGasLimit] = useState("");
   const [minBNB, setMinBNB] = useState("");
+  const [minProfit, setMinProfit] = useState("");
   const [transactions, setTransactions] = useState([]);
+  const [isPercent, setIsPercent] = useState(0);
+  const [isAjustGas, setIsAdjustGas] = useState(0);
+  const [isProfit, setIsProfit] = useState(0);
 
   var rows = transactions.map((item) => {
     item.transaction = (
@@ -59,6 +64,11 @@ const FrontRun = () => {
         label: "Transaction",
         field: "transaction",
       },
+
+      {
+        label : "Profit",
+        field : "price"
+      }
     ],
     rows: rows,
   };
@@ -66,14 +76,17 @@ const FrontRun = () => {
   const start = () => {
     if (
       nodeUrl == "" ||
-      (inAmount == "" && inPercent == "") ||
+      inAmount == "" ||
+      inPercent == "" ||
       slippage == "" ||
       gasPrice == "" ||
       gasLimit == "" ||
-      minBNB == ""  ||
+      minBNB == "" ||
       gasMaxPrice < gasPrice
     ) {
-      alert("please input all correct information to start the Front running !");
+      alert(
+        "please input all correct information to start the Front running !"
+      );
     } else {
       setIsRunning(true);
       startFront(
@@ -87,7 +100,11 @@ const FrontRun = () => {
         gasPrice,
         gasMaxPrice,
         gasLimit,
-        minBNB
+        minBNB,
+        minProfit,
+        isPercent,
+        isAjustGas,
+        isProfit
       );
     }
   };
@@ -109,6 +126,10 @@ const FrontRun = () => {
     setMinBNB(status.minbnb);
     setGasMaxPrice(status.gasmax);
     setInPercent(status.inpercent);
+    setMinProfit(status.minprofit);
+    setIsPercent(status.ispercent);
+    setIsAdjustGas(status.isadjustgas);
+    setIsProfit(status.isprofit);
   };
 
   const setStatus = async () => {
@@ -141,7 +162,7 @@ const FrontRun = () => {
   return (
     <div>
       <div className="row">
-        <div className="col-sm-12 col-md-6 col-lg-6">
+        <div className="col-sm-12 col-md-6 col-lg-6 hidden">
           <div className="form-group hidden">
             <label htmlFor="usr">Wallet Address:</label>
             <FormControl
@@ -154,7 +175,7 @@ const FrontRun = () => {
               className="form-control form-control-md"
             />
           </div>
-          <div className="form-group">
+          <div className="form-group hidden">
             <label htmlFor="tokenAddress">Token Address:</label>
             <FormControl
               disabled
@@ -169,18 +190,6 @@ const FrontRun = () => {
           </div>
         </div>
         <div className="col-sm-12 col-md-6 col-lg-6">
-          <div className="form-group hidden">
-            <label htmlFor="pwd">Private Key:</label>
-            <FormControl
-              type="password"
-              id="privateKey"
-              value={privateKey}
-              onChange={(e) => {
-                setPrivateKey(e.target.value);
-              }}
-              className="form-control form-control-md"
-            />
-          </div>
           <div className="form-group">
             <label htmlFor="wssURL">Quick Node WSS URL:</label>
             <FormControl
@@ -193,9 +202,21 @@ const FrontRun = () => {
               className="form-control form-control-md"
             />
           </div>
+          <div className="form-group hidden">
+            <label htmlFor="pwd">Private Key:</label>
+            <FormControl
+              type="password"
+              id="privateKey"
+              value={privateKey}
+              onChange={(e) => {
+                setPrivateKey(e.target.value);
+              }}
+              className="form-control form-control-md"
+            />
+          </div>
         </div>
       </div>
-
+      <h4>My address </h4>
       <div className="form-group">
         <label htmlFor="bnb-amount">BNB Amount (Fixed):</label>
         <input
@@ -205,13 +226,12 @@ const FrontRun = () => {
           className="short-input"
           value={inAmount}
           onChange={(e) => {
-            if (e.target.value > 0) {
-              setInPercent("");
-            } 
             setInAmount(e.target.value);
           }}
         />
-        <label htmlFor="bnb-amount">BNB Amount (% of original Transaction):</label>
+        <label htmlFor="bnb-amount">
+          BNB Amount (% of original Transaction):
+        </label>
         <input
           type="number"
           id="inPercent"
@@ -219,11 +239,9 @@ const FrontRun = () => {
           placeholder="10"
           value={inPercent}
           onChange={(e) => {
-            if (e.target.value > 0) {
-              setInAmount("");
-            } 
             setInPercent(e.target.value);
           }}
+          disabled={isPercent == 1 ? false : true}
         />
         <label htmlFor="pwd">Slippage(%):</label>
         <input
@@ -236,6 +254,7 @@ const FrontRun = () => {
             setSlippage(e.target.value);
           }}
         />
+        <div className="row"></div>
         <label htmlFor="pwd">Gas Price (Min):</label>
         <input
           type="number"
@@ -246,6 +265,7 @@ const FrontRun = () => {
           onChange={(e) => {
             setGasPrice(e.target.value);
           }}
+          disabled={isAjustGas == 1 ? false : true}
         />
 
         <label htmlFor="pwd">Gas Price (Max):</label>
@@ -258,6 +278,7 @@ const FrontRun = () => {
           onChange={(e) => {
             setGasMaxPrice(e.target.value);
           }}
+          disabled={isAjustGas == 1 ? false : true}
         />
 
         <label htmlFor="pwd">Gas Limit:</label>
@@ -270,7 +291,14 @@ const FrontRun = () => {
           onChange={(e) => {
             setGasLimit(e.target.value);
           }}
+          disabled={isAjustGas == 1 ? false : true}
         />
+      </div>
+
+      <h4>Front running </h4>
+
+      <div className="form-group">
+        {" "}
         <label htmlFor="pwd">Min BNB to follow:</label>
         <input
           type="number"
@@ -282,7 +310,50 @@ const FrontRun = () => {
             setMinBNB(e.target.value);
           }}
         />
+        <label htmlFor="pwd">Min Profit % </label>
+        <input
+          type="number"
+          id="minProfit"
+          placeholder="0.2"
+          className="short-input"
+          value={minProfit}
+          onChange={(e) => {
+            setMinProfit(e.target.value);
+          }}
+          disabled={isProfit == 1 ? false : true}
+        />
+      </div>
 
+      <h4> Extra functions </h4>
+
+      <div className="checkbox-group">
+        <Form.Check
+          type="checkbox"
+          label="Use % of BNB order"
+          onChange={(e) => {
+            let item = isPercent ? 0 : 1;
+            setIsPercent(item);
+          }}
+          checked={isPercent == 1 ? true : false}
+        />
+        <Form.Check
+          type="checkbox"
+          label="Adjustable Gas Price"
+          onChange={(e) => {
+            let item = isAjustGas ? 0 : 1;
+            setIsAdjustGas(item);
+          }}
+          checked={isAjustGas == 1 ? true : false}
+        />
+        <Form.Check
+          type="checkbox"
+          label="Profit %"
+          onChange={(e) => {
+            let item = isProfit ? 0 : 1;
+            setIsProfit(item);
+          }}
+          checked={isProfit == 1 ? true : false}
+        />
         <Button
           variant={isRunning ? "danger" : "primary"}
           id="button-addon2"

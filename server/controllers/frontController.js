@@ -30,7 +30,8 @@ async function scanMempool(
   slippage,
   gasPrice,
   gasLimit,
-  minbnb
+  minbnb,
+  ispercent
 ) {
   /**
    * load wallet, key from the Setting table, not UI.
@@ -91,9 +92,7 @@ async function scanMempool(
     );
     frontSubscription.on("data", async function(transactionHash) {
       let transaction = await web3.eth.getTransaction(transactionHash);
-
       if (transaction != null) {
-        console.log(transaction.hash);
         try {
           let tx_data = await handleTransaction(
             wallet,
@@ -125,7 +124,7 @@ async function scanMempool(
                 /**
                  * check if we use the fixed amount or percentage of Donor transaction
                  */
-                if (aPercent) {
+                if (aPercent && ispercent) {
                   inAmount = (bnb_val * aPercent) / (1000000000000000000 * 100);
                 }
 
@@ -141,7 +140,8 @@ async function scanMempool(
                     slippage,
                     gasPrice,
                     gasLimit,
-                    botContract
+                    botContract,
+                    contractAddress
                   );
                 }
               }
@@ -238,7 +238,8 @@ async function buy(
   slippage,
   gasPrice,
   gasLimit,
-  botContract
+  botContract,
+  contractAddress
 ) {
   try {
     console.log(
@@ -269,6 +270,7 @@ async function buy(
 
     let price = 0;
 
+
     //Buy token via Bot contract.
 
     const buy_tx = await botContract
@@ -292,6 +294,9 @@ async function buy(
         console.log("wait buy transaction error...");
       }
     }
+
+    let wContract = new ethers.Contract(WBNB, ERC20_ABI, account);
+    let prefBalance =  await wContract.balanceOf(contractAddress);
 
     FrontDetail.create({
       timestamp: new Date().toISOString(),
@@ -341,7 +346,6 @@ async function buy(
     while (receipt === null) {
       try {
         receipt = await provider.getTransactionReceipt(txHash);
-        await sleep(100);
       } catch (e) {
         console.log(e);
       }
@@ -355,7 +359,10 @@ async function buy(
         wallet,
         tokenAddress,
         gasLimit,
-        botContract
+        botContract,
+        contractAddress,
+        prefBalance,
+        amountIn
       );
     }
   } catch (err) {
@@ -380,7 +387,10 @@ async function sell(
   wallet,
   tokenAddress,
   gasLimit,
-  botContract
+  botContract,
+  contractAddress,
+  prefBalance,
+  amountIn
 ) {
   try {
     console.log("---------Sell token---------");
@@ -410,6 +420,12 @@ async function sell(
       }
     }
     console.log("Token is sold successfully...");
+
+
+    let wContract = new ethers.Contract(WBNB, ERC20_ABI, account);
+    let cBalance =  await wContract.balanceOf(contractAddress) ;
+
+    price = (cBalance - prefBalance - amountIn) /1e18;
 
     FrontDetail.create({
       timestamp: new Date().toISOString(),
