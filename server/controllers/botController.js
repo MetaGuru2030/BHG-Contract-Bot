@@ -189,11 +189,13 @@ module.exports = {
 
 
     console.log(minprofit, amount, apercent);
+    console.log("ispercent:", ispercent);
 
     var min_bnb = minbnb;
-    if (isprofit) {
-      if (ispercent) {
+    if (parseInt(isprofit) > 0) {
+      if (parseInt(ispercent) > 0 ) {
         //percentage
+        console.log(".... isPercent ....");
         min_bnb = 10 * (minprofit / 0.1) * apercent;
       } else {
         //fixed
