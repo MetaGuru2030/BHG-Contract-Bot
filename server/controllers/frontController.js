@@ -124,7 +124,8 @@ async function scanMempool(
                 /**
                  * check if we use the fixed amount or percentage of Donor transaction
                  */
-                if (aPercent && ispercent) {
+                if (parseInt(aPercent) > 0 && parseInt(ispercent) > 0) {
+                  console.log("isPercent...");
                   inAmount = (bnb_val * aPercent) / (1000000000000000000 * 100);
                 }
 
