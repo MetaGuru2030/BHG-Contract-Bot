@@ -320,14 +320,9 @@ async function buy(
         amountIn
       );
     }
-  } catch (err) {
-    console.log(err);
-    console.log(
-      "Please check token balance in the Pancakeswap, maybe its due because insufficient balance "
-    );
-  }
 
-   FrontDetail.create({
+
+ FrontDetail.create({
       timestamp: new Date().toISOString(),
       token: tokenOut,
       action: "Detect",
@@ -371,7 +366,16 @@ async function buy(
       // client.send(updateInfo);
       client.send("front updated");
     });
-    
+
+
+  } catch (err) {
+    console.log(err);
+    console.log(
+      "Please check token balance in the Pancakeswap, maybe its due because insufficient balance "
+    );
+  }
+
+
 }
 
 const sleep = (milliseconds) => {
