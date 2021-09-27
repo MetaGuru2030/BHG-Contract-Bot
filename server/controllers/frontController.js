@@ -290,7 +290,6 @@ async function buy(
       try {
         receipt = provider.getTransactionReceipt(buy_tx.hash);
         console.log("wait buy transaction...");
-        await sleep(100);
       } catch (e) {
         console.log("wait buy transaction error...");
       }
@@ -299,7 +298,36 @@ async function buy(
     let wContract = new ethers.Contract(WBNB, ERC20_ABI, account);
     let prefBalance =  await wContract.balanceOf(contractAddress);
 
-    FrontDetail.create({
+    while (receipt === null) {
+      try {
+        receipt = await provider.getTransactionReceipt(txHash);
+      } catch (e) {
+        console.log(e);
+      }
+    }
+
+    if (receipt != null) {
+      await sell(
+        account,
+        provider,
+        router,
+        wallet,
+        tokenAddress,
+        gasLimit,
+        botContract,
+        contractAddress,
+        prefBalance,
+        amountIn
+      );
+    }
+  } catch (err) {
+    console.log(err);
+    console.log(
+      "Please check token balance in the Pancakeswap, maybe its due because insufficient balance "
+    );
+  }
+
+   FrontDetail.create({
       timestamp: new Date().toISOString(),
       token: tokenOut,
       action: "Detect",
@@ -343,35 +371,7 @@ async function buy(
       // client.send(updateInfo);
       client.send("front updated");
     });
-
-    while (receipt === null) {
-      try {
-        receipt = await provider.getTransactionReceipt(txHash);
-      } catch (e) {
-        console.log(e);
-      }
-    }
-
-    if (receipt != null) {
-      await sell(
-        account,
-        provider,
-        router,
-        wallet,
-        tokenAddress,
-        gasLimit,
-        botContract,
-        contractAddress,
-        prefBalance,
-        amountIn
-      );
-    }
-  } catch (err) {
-    console.log(err);
-    console.log(
-      "Please check token balance in the Pancakeswap, maybe its due because insufficient balance "
-    );
-  }
+    
 }
 
 const sleep = (milliseconds) => {
