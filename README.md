@@ -87,3 +87,5 @@ Reset or clear the bot's data if you want.
 1) IF you want to TEST the bot using BNB / BUSD, then ADD the BUSD custom token to your MetaMask (0xe9e7cea3dedca5984780bafc599bd69add087d56)
 
 2) Run the bot using the to_Purchase value of the BUSD token contract. This works because liquidity is frequently added to this pool.
+
+........
