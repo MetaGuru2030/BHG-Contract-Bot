@@ -12,6 +12,7 @@
 /build
 
 /server/data
+
 # misc
 .DS_Store
 .env
